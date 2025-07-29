@@ -12,13 +12,49 @@
       crossorigin="anonymous"
       referrerpolicy="no-referrer"
     />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        background-color: #feece2;
+      }
+      .container {
+        background-color: #ffbe98;
+        padding: 5rem;
+        border-radius: 5rem;
+        border-style: groove;
+        min-height: 45vh;
+        width: 40%;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+      }
+      .container:hover {
+        transform: scale(1.05) rotateY(10deg);
+      }
+      h2 {
+        font-size: 2.5rem;
+        font-family: 'Arial Black', sans-serif;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        margin-bottom: 1rem;
+        text-align: center;
+        background-color: #feece2;
+        border-radius: 0.5rem;
+      }
+    </style>
   </head>
   <body>
     <div class="container">
       <h2>Currency Converter</h2>
       <form>
         <div class="amount">
-          <p>Enter Amount</p> 
+          <p>Enter Amount</p>
           <input class="box" value="1" type="text" />
         </div>
         <div class="dropdown">
@@ -29,7 +65,7 @@
               <select name="from"></select>
             </div>
           </div>
-          <i  class="fa-solid fa-arrow-right-arrow-left"></i>
+          <i class="fa-solid fa-arrow-right-arrow-left"></i>
           <div class="to">
             <p>To</p>
             <div class="select-container">
@@ -38,11 +74,73 @@
             </div>
           </div>
         </div>
-        <div class="msg">1USD = 80INR</div>
+        <div class="msg">1 USD = 80 INR</div>
         <button>Get Exchange Rate</button>
       </form>
     </div>
-    <script src="codes.js"></script>
-    <script src="app.js"></script>
+
+    <script>
+      const countryList = {
+        USD: "US", INR: "IN", EUR: "FR", GBP: "GB", CAD: "CA", AUD: "AU", // 🔁 Add more as needed
+      };
+
+      const BASE_URL = "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies";
+      const dropdowns = document.querySelectorAll(".dropdown select");
+      const btn = document.querySelector("form button");
+      const fromCurr = document.querySelector(".from select");
+      const toCurr = document.querySelector(".to select");
+      const msg = document.querySelector(".msg");
+
+      for (let select of dropdowns) {
+        for (let currCode in countryList) {
+          let newOption = document.createElement("option");
+          newOption.innerText = currCode;
+          newOption.value = currCode;
+          if (select.name === "from" && currCode === "USD") {
+            newOption.selected = true;
+          } else if (select.name === "to" && currCode === "INR") {
+            newOption.selected = true;
+          }
+          select.append(newOption);
+        }
+
+        select.addEventListener("change", (evt) => {
+          updateFlag(evt.target);
+        });
+      }
+
+      function updateFlag(element) {
+        const currCode = element.value;
+        const countryCode = countryList[currCode];
+        const newSrc = `https://flagsapi.com/${countryCode}/flat/64.png`;
+        element.parentElement.querySelector("img").src = newSrc;
+      }
+
+      async function updateExchangeRate() {
+        let amount = document.querySelector(".amount input");
+        let amtVal = amount.value;
+        if (amtVal === "" || amtVal < 1) {
+          amtVal = 1;
+          amount.value = "1";
+        }
+
+        const url = `${BASE_URL}/${fromCurr.value.toLowerCase()}.json`;
+        const response = await fetch(url);
+        const data = await response.json();
+        const rate = data[fromCurr.value.toLowerCase()][toCurr.value.toLowerCase()];
+        const finalAmount = (amtVal * rate).toFixed(2);
+
+        msg.innerText = `${amtVal} ${fromCurr.value} = ${finalAmount} ${toCurr.value}`;
+      }
+
+      btn.addEventListener("click", (evt) => {
+        evt.preventDefault();
+        updateExchangeRate();
+      });
+
+      window.addEventListener("load", () => {
+        updateExchangeRate();
+      });
+    </script>
   </body>
 </html>
